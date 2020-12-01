@@ -14,7 +14,8 @@ func check(e error) {
 }
 
 func linesInFile(fileName string) []string {
-  f, _ := os.Open(fileName)
+  f, err := os.Open(fileName)
+  check(err)
   scanner := bufio.NewScanner(f)
   result := []string{}
 
@@ -31,29 +32,41 @@ func strToInt(n string) int {
   return x
 }
 
-func checkSum(sum int, n1 string, n2 string) bool {
-  if strToInt(n1) + strToInt(n2) == sum {
+func checkSum(sum int, array []int) bool {
+  result := 0
+  for _, v := range array {
+    result += v
+  }
+  if result == sum {
     return true
   }
   return false
 }
 
-func multiplyStrLn(n1 string, n2 string) int {
-  return strToInt(n1) * strToInt(n2)
+func multiplyNumbers(array []int) int {
+  result := 1
+  for _,v := range array {
+    result = result * v
+  }
+  return result
 }
 
-
 func main() {
-
   inputs := linesInFile(`day01_input.txt`)
   sum := 2020
   hasAnswer := false
   for _, line := range inputs {
     for _, lineParaller := range inputs {
-      if checkSum(sum, line, lineParaller) {
-        fmt.Printf("Answer: %v", multiplyStrLn(line, lineParaller))
-        hasAnswer = true
+      if checkSum(sum, []int{strToInt(line), strToInt(lineParaller)}) {
+        fmt.Printf("Answer: %v\n", multiplyNumbers([]int{strToInt(line), strToInt(lineParaller)}))
         break
+      }
+      for _, lineParaller2 := range inputs {
+        if (checkSum(sum, []int{strToInt(line), strToInt(lineParaller), strToInt(lineParaller2)})) {
+          fmt.Printf("Answer b: %v\n", multiplyNumbers([]int{strToInt(line), strToInt(lineParaller), strToInt(lineParaller2)}))
+          hasAnswer = true
+          break
+        }
       }
     }
     if hasAnswer {
