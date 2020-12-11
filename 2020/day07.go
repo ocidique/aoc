@@ -55,14 +55,44 @@ func main() {
 		}
 	}
 
-	for _, g := range graph.colors {
-		// fmt.Println(g)
-		if value, ok := g.contains["shiny gold"]; ok {
-			fmt.Println("color:", g.color)
-			fmt.Println("rule:", g.contains)
-			fmt.Println("shiny gold bags: ", value)
+	bag := "shiny gold"
+	visited := map[string]bool{}
+	containsBag := map[string]bool{}
+	for _, rule := range graph.colors {
+		dfs(bag, graph, rule, visited, containsBag)
+	}
+
+	count := 0
+	for c := range containsBag {
+		if c != bag {
+			count++
 		}
 	}
 
+	fmt.Println("Count: ", count)
 	fmt.Println("Execution time: ", time.Since(start))
+}
+
+// depth-first search
+func dfs(bag string, graph luggageGraph, rule luggageRule, visited, containsBag map[string]bool) bool {
+	if rule.color == bag || containsBag[rule.color] {
+		containsBag[rule.color] = true
+		return true
+	} else if visited[rule.color] {
+		return false
+	}
+
+	visited[rule.color] = true
+
+	for childColor := range rule.contains {
+		childRule := graph.colors[childColor]
+		found := dfs(bag, graph, childRule, visited, containsBag)
+
+		if found {
+			containsBag[rule.color] = true
+			return true
+		}
+	}
+
+	return false
 }
