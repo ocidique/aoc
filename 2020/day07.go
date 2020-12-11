@@ -17,6 +17,46 @@ type luggageGraph struct {
 	colors map[string]luggageRule
 }
 
+// depth-first search for bag occurrence
+func bagOccurrenceDFS(graph luggageGraph, rule luggageRule, bag string, visited, containsBag map[string]bool) bool {
+	if rule.color == bag || containsBag[rule.color] {
+		containsBag[rule.color] = true
+		return true
+	} else if visited[rule.color] {
+		return false
+	}
+
+	visited[rule.color] = true
+
+	for childColor := range rule.contains {
+		childRule := graph.colors[childColor]
+		found := bagOccurrenceDFS(graph, childRule, bag, visited, containsBag)
+
+		if found {
+			containsBag[rule.color] = true
+			return true
+		}
+	}
+	return false
+}
+
+// depth-first search for counting individual bags inside given bag
+func bagCountDFS(graph luggageGraph, bag string, bagTypeCounts map[string]int) int {
+	if len(graph.colors[bag].contains) == 0 {
+		return 0
+	} else if bagTypeCounts[bag] != 0 {
+		return bagTypeCounts[bag]
+	}
+
+	total := 0
+	for color, count := range graph.colors[bag].contains {
+		subCount := bagCountDFS(graph, color, bagTypeCounts)
+		bagTypeCounts[color] = subCount
+		total += count + count*bagCountDFS(graph, color, bagTypeCounts)
+	}
+	return total
+}
+
 func main() {
 	start := time.Now()
 	luggages := utils.LinesInFile("day07_input.txt")
@@ -50,7 +90,7 @@ func main() {
 			for i, childColor := range childColors {
 				rule.contains[childColor] = childCounts[i]
 			}
-			// fmt.Println(rule)
+
 			graph.colors[parts[0]] = rule
 		}
 	}
@@ -59,7 +99,7 @@ func main() {
 	visited := map[string]bool{}
 	containsBag := map[string]bool{}
 	for _, rule := range graph.colors {
-		dfs(bag, graph, rule, visited, containsBag)
+		bagOccurrenceDFS(graph, rule, bag, visited, containsBag)
 	}
 
 	count := 0
@@ -69,30 +109,9 @@ func main() {
 		}
 	}
 
-	fmt.Println("Count: ", count)
+	total := bagCountDFS(graph, bag, map[string]int{})
+
+	fmt.Println("Part 1: ", count)
+	fmt.Println("Part 2: ", total)
 	fmt.Println("Execution time: ", time.Since(start))
-}
-
-// depth-first search
-func dfs(bag string, graph luggageGraph, rule luggageRule, visited, containsBag map[string]bool) bool {
-	if rule.color == bag || containsBag[rule.color] {
-		containsBag[rule.color] = true
-		return true
-	} else if visited[rule.color] {
-		return false
-	}
-
-	visited[rule.color] = true
-
-	for childColor := range rule.contains {
-		childRule := graph.colors[childColor]
-		found := dfs(bag, graph, childRule, visited, containsBag)
-
-		if found {
-			containsBag[rule.color] = true
-			return true
-		}
-	}
-
-	return false
 }
